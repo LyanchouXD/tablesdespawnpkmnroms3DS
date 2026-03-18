@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pokédex — Tables de Spawn</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --red: #cc0000;
+  --darkred: #8b0000;
+  --yellow: #ffcb05;
+  --bg: #0d1117;
+  --panel: #161b22;
+  --card: #1c2128;
+  --card2: #21262d;
+  --text: #e6edf3;
+  --muted: #7d8590;
+  --border: #30363d;
+  --grass-c: #57ab5a;
+  --water-c: #4493f8;
+  --rock-c:  #a8926e;
+  --swarm-c: #d29922;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  background: linear-gradient(135deg, var(--red) 0%, #8b1a1a 100%);
+  padding: 1.2rem 2rem;
+  display: flex; align-items: center; gap: 1.2rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  position: relative; overflow: hidden;
+}
+header::after {
+  content: '';
+  position: absolute; right: -60px; top: -60px;
+  width: 200px; height: 200px;
+  border: 40px solid rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+.ball-icon { width: 44px; height: 44px; flex-shrink: 0; }
+header h1 { font-family: 'Press Start 2P', monospace; font-size: 0.9rem; color: var(--yellow); line-height: 1.7; }
+header p { font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-top: 0.2rem; }
+
+/* LAYOUT */
+.container { max-width: 1280px; margin: 0 auto; padding: 1.5rem; }
+
+/* CONTROLS */
+.controls {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.2rem;
+  display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;
+}
+.ctrl-label { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 0.35rem; }
+.ctrl-group { display: flex; flex-direction: column; }
+select {
+  background: var(--card2); color: var(--text);
+  border: 1.5px solid var(--border); border-radius: 8px;
+  padding: 0.6rem 2.5rem 0.6rem 0.9rem;
+  font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; min-width: 220px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237d8590' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.8rem center;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  appearance: none;
+}
+select:focus { outline: none; border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,203,5,0.15); }
+
+/* METHOD FILTER PILLS */
+.pills { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.pill {
+  border: 1.5px solid var(--border); border-radius: 999px;
+  padding: 0.3rem 0.85rem;
+  font-family: 'Nunito', sans-serif; font-size: 0.75rem; font-weight: 800;
+  cursor: pointer; transition: all 0.15s; background: transparent;
+  color: var(--muted); letter-spacing: 0.04em;
+}
+.pill:hover { border-color: var(--text); color: var(--text); }
+.pill.active-all   { background: var(--yellow); border-color: var(--yellow); color: #1a1000; }
+.pill.active-grass { background: var(--grass-c); border-color: var(--grass-c); color: #fff; }
+.pill.active-water { background: var(--water-c); border-color: var(--water-c); color: #fff; }
+.pill.active-rock  { background: var(--rock-c);  border-color: var(--rock-c);  color: #fff; }
+.pill.active-swarm { background: var(--swarm-c); border-color: var(--swarm-c); color: #fff; }
+
+/* INFO BAR */
+.info-bar { display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center; flex-wrap: wrap; }
+.info-chip {
+  font-size: 0.75rem; font-weight: 700; color: var(--muted);
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; padding: 0.3rem 0.9rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.info-chip strong { color: var(--yellow); }
+
+/* GRID */
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 0.75rem;
+}
+.poke-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 0.75rem 0.75rem;
+  display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+  animation: pop 0.25s ease both;
+  position: relative; overflow: hidden;
+  container-type: inline-size;
+}
+.poke-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  border-color: rgba(255,203,5,0.5);
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.9) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.sprite-box {
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+}
+.sprite-box img {
+  width: 72px; height: 72px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+  transition: transform 0.2s;
+}
+.poke-card:hover .sprite-box img { transform: scale(1.12) translateY(-2px); }
+.sprite-box .no-sprite {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--card2); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; color: var(--muted);
+}
+.poke-name {
+  font-weight: 900; font-size: 0.8rem; text-align: center;
+  line-height: 1.2; color: var(--text); word-break: break-word;
+}
+.encounters { width: 100%; display: flex; flex-direction: column; gap: 3px; margin-top: 2px; }
+.enc-row {
+  display: flex; align-items: center; gap: 3px;
+  font-size: 0.68rem; padding: 3px 5px; border-radius: 6px;
+  background: var(--card2); overflow: hidden; min-width: 0;
+}
+.enc-method { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1 1 0; min-width: 0; }
+.c-grass .enc-method { color: var(--grass-c); }
+.c-water .enc-method { color: var(--water-c); }
+.c-rock  .enc-method { color: var(--rock-c);  }
+.c-swarm .enc-method { color: var(--swarm-c); }
+.enc-prob { font-weight: 800; color: var(--yellow); white-space: nowrap; flex-shrink: 0; }
+.enc-lvl  { font-weight: 700; color: #8ac8ff; font-size: clamp(0.5rem, 3.5cqw, 0.6rem); flex-shrink: 1;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0; max-width: 54px; }
+
+/* EMPTY */
+.empty {
+  grid-column: 1/-1; text-align: center; padding: 4rem 2rem;
+  color: var(--muted);
+}
+.empty .ico { font-size: 3.5rem; display: block; margin-bottom: 1rem; }
+.empty p { font-size: 1rem; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+  <svg class="ball-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="47" fill="white" stroke="#222" stroke-width="5"/>
+    <path d="M3 50 A47 47 0 0 1 97 50Z" fill="#cc0000"/>
+    <line x1="3" y1="50" x2="97" y2="50" stroke="#222" stroke-width="5"/>
+    <circle cx="50" cy="50" r="13" fill="white" stroke="#222" stroke-width="5"/>
+    <circle cx="50" cy="50" r="7" fill="white" stroke="#bbb" stroke-width="2"/>
+  </svg>
+  <div>
+    <h1>Tables de Spawn</h1>
+    <p>Sélectionne une zone pour voir les Pokémon disponibles</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="controls">
+    <div class="ctrl-group">
+      <div class="ctrl-label">🗺️ Zone</div>
+      <select id="zoneSelect">
+        <option value="">— Choisir une zone —</option>
+      </select>
+    </div>
+    <div class="ctrl-group" id="pillGroup" style="display:none">
+      <div class="ctrl-label">🎯 Type de rencontre</div>
+      <div class="pills" id="pills"></div>
+    </div>
+  </div>
+
+  <div class="info-bar" id="infoBar" style="display:none">
+    <div class="info-chip">Pokémon trouvables : <strong id="countEl">0</strong></div>
+    <div class="info-chip">Zone : <strong id="zoneNameEl">—</strong></div>
+  </div>
+
+  <div class="pokemon-grid" id="grid">
+    <div class="empty">
+      <span class="ico">🗺️</span>
+      <p>Sélectionne une zone dans le menu ci-dessus</p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+// SPAWNS is populated dynamically by parseSpawnsFile() below
+let SPAWNS = {};
+
+// ── SPAWNS.TXT PARSER ────────────────────────────────────────────────────────
+// Supported methods from spawns.txt
+const KNOWN_METHODS = ['Grass', 'Tall Grass', 'Rock Smash', 'Swarm', 'Old Rod', 'Good Rod', 'Super Rod', 'Surf'];
+
+function parseSpawnsFile(text) {
+  const result = {};
+  // Normalize line endings (Windows CRLF -> LF)
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  let currentZone = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+
+    // Zone header: "Map NNN - Zone Name"
+    if (line.startsWith('Map ') && i > 0 && lines[i-1].trim() === '======') {
+      const m = line.match(/^Map \d+ - (.+)$/);
+      if (m) {
+        currentZone = m[1].trim();
+        if (!result[currentZone]) result[currentZone] = {};
+      }
+      continue;
+    }
+
+    if (!currentZone) continue;
+    if (line === 'No encounters found.' || line === '======' || line === '') continue;
+
+    // Try to match a known method line: "Method: entries..."
+    for (const method of KNOWN_METHODS) {
+      if (line.startsWith(method + ':')) {
+        const entriesStr = line.slice(method.length + 1).trim();
+        // Parse entries: "X% - Name (Level Y, Forme: Z), ..."
+        const entries = entriesStr.split(/,\s*(?=\??\d+%|\?%)/);
+        if (!result[currentZone][method]) result[currentZone][method] = {};
+
+        for (const entry of entries) {
+          const em = entry.trim().match(/^(\??)\s*(\d+(?:\.\d+)?)%\s*-\s*(.+?)\s*\(Level\s*(\d+(?:-\d+)?),/);
+          if (!em) continue;
+          const isUnknown = em[1] === '?';
+          const pct = parseFloat(em[2]);
+          const name = em[3].trim();
+          const lvl = em[4];
+          if (name === '---') continue; // Skip empty slots
+
+          // Parse level(s): "5" or "5-10"
+          let lvlMin, lvlMax;
+          if (lvl.includes('-')) {
+            const parts = lvl.split('-');
+            lvlMin = parseInt(parts[0]); lvlMax = parseInt(parts[1]);
+          } else {
+            lvlMin = lvlMax = parseInt(lvl);
+          }
+
+          if (!result[currentZone][method][name]) {
+            result[currentZone][method][name] = {
+              prob: isUnknown ? '?%' : pct + '%',
+              lvl: 'lvl.' + lvl,
+              _pct: isUnknown ? 0 : pct,
+              _lvlMin: lvlMin, _lvlMax: lvlMax
+            };
+          } else {
+            // Accumulate percentage for duplicate entries
+            if (!isUnknown) {
+              result[currentZone][method][name]._pct += pct;
+              result[currentZone][method][name].prob = result[currentZone][method][name]._pct + '%';
+            }
+            // Expand level range
+            result[currentZone][method][name]._lvlMin = Math.min(result[currentZone][method][name]._lvlMin, lvlMin);
+            result[currentZone][method][name]._lvlMax = Math.max(result[currentZone][method][name]._lvlMax, lvlMax);
+            const mn = result[currentZone][method][name]._lvlMin;
+            const mx = result[currentZone][method][name]._lvlMax;
+            result[currentZone][method][name].lvl = mn === mx ? 'lvl.' + mn : 'lvl.' + mn + '-' + mx;
+          }
+        }
+
+        // Clean up internal fields and remove empty methods
+        for (const name of Object.keys(result[currentZone][method])) {
+          delete result[currentZone][method][name]._pct;
+          delete result[currentZone][method][name]._lvlMin;
+          delete result[currentZone][method][name]._lvlMax;
+        }
+        if (Object.keys(result[currentZone][method]).length === 0) {
+          delete result[currentZone][method];
+        }
+        break;
+      }
+    }
+  }
+
+  // Remove zones with no encounters
+  for (const zone of Object.keys(result)) {
+    if (Object.keys(result[zone]).length === 0) {
+      delete result[zone];
+    }
+  }
+
+  return result;
+}
+
+// ── FILE LOADER UI ───────────────────────────────────────────────────────────
+function resetToFileLoader() {
+  SPAWNS = {};
+  // Reset zone select
+  const zoneSelect = document.getElementById('zoneSelect');
+  while (zoneSelect.options.length > 1) zoneSelect.remove(1);
+  zoneSelect.value = '';
+  // Hide controls, show banner
+  document.querySelector('.controls').style.display = 'none';
+  document.getElementById('fileBanner').style.display = '';
+  document.getElementById('infoBar').style.display = 'none';
+  document.getElementById('pillGroup').style.display = 'none';
+  document.getElementById('grid').innerHTML = '<div class="empty"><span class="ico">🗺️</span><p>Sélectionne une zone dans le menu ci-dessus</p></div>';
+  // Reset file input so same file can be re-selected
+  const input = document.getElementById('spawnsFileInput');
+  if (input) input.value = '';
+  document.getElementById('fileStatus').textContent = '';
+}
+
+function initFileLoader() {
+  const container = document.querySelector('.container');
+  const controls = document.querySelector('.controls');
+
+  // Create file loader banner
+  const banner = document.createElement('div');
+  banner.id = 'fileBanner';
+  banner.style.cssText = `
+    background: var(--panel); border: 2px dashed var(--border);
+    border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.2rem;
+    text-align: center; transition: border-color 0.2s;
+  `;
+  banner.innerHTML = `
+    <div style="font-size:2rem;margin-bottom:0.5rem">📂</div>
+    <div style="font-weight:800;font-size:0.9rem;margin-bottom:0.4rem">Charger le fichier spawns.txt</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.9rem">
+      Sélectionne ton fichier <code style="background:var(--card2);padding:2px 6px;border-radius:4px">spawns.txt</code> pour remplir le Pokédex
+    </div>
+    <label style="cursor:pointer">
+      <input type="file" id="spawnsFileInput" accept=".txt" style="display:none">
+      <span style="
+        background:var(--red);color:#fff;padding:0.5rem 1.2rem;
+        border-radius:8px;font-weight:800;font-size:0.85rem;
+        transition:background 0.15s;cursor:pointer;
+      " onmouseover="this.style.background='var(--darkred)'" onmouseout="this.style.background='var(--red)'">
+        📄 Choisir spawns.txt
+      </span>
+    </label>
+    <div id="fileStatus" style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted)"></div>
+  `;
+
+  container.insertBefore(banner, controls);
+  controls.style.display = 'none';
+
+  // Drag & drop support
+  banner.addEventListener('dragover', e => { e.preventDefault(); banner.style.borderColor = 'var(--yellow)'; });
+  banner.addEventListener('dragleave', () => { banner.style.borderColor = 'var(--border)'; });
+  banner.addEventListener('drop', e => {
+    e.preventDefault();
+    banner.style.borderColor = 'var(--border)';
+    const file = e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  document.getElementById('spawnsFileInput').addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+}
+
+function loadFile(file) {
+  const status = document.getElementById('fileStatus');
+  status.textContent = '⏳ Chargement en cours...';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      SPAWNS = parseSpawnsFile(e.target.result);
+      const zoneCount = Object.keys(SPAWNS).length;
+      if (zoneCount === 0) {
+        status.textContent = '❌ Aucune zone trouvée. Vérifie le format du fichier.';
+        return;
+      }
+      // Hide banner, show controls
+      document.getElementById('fileBanner').style.display = 'none';
+      document.querySelector('.controls').style.display = 'flex';
+
+      // Add the "reload" button only once
+      if (!document.getElementById('reloadBtn')) {
+        const reloadBtn = document.createElement('div');
+        reloadBtn.id = 'reloadBtn';
+        reloadBtn.className = 'ctrl-group';
+        reloadBtn.innerHTML = `
+          <div class="ctrl-label">📂 Fichier</div>
+          <button id="reloadBtnInner"
+            style="background:var(--card2);color:var(--muted);border:1.5px solid var(--border);border-radius:8px;padding:0.6rem 0.9rem;font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;">
+            🔄 Changer
+          </button>
+        `;
+        document.querySelector('.controls').appendChild(reloadBtn);
+        document.getElementById('reloadBtnInner').addEventListener('click', () => {
+          resetToFileLoader();
+          document.getElementById('spawnsFileInput').click();
+        });
+      }
+
+      // Populate zone select
+      populateZones();
+      status.textContent = '';
+    } catch(err) {
+      status.textContent = '❌ Erreur lors du parsing: ' + err.message;
+    }
+  };
+  reader.onerror = () => { status.textContent = '❌ Impossible de lire le fichier.'; };
+  reader.readAsText(file, 'utf-8');
+}
+
+function populateZones() {
+  const zoneSelect = document.getElementById('zoneSelect');
+  // Clear existing options (keep first)
+  while (zoneSelect.options.length > 1) zoneSelect.remove(1);
+  const zones = Object.keys(SPAWNS).sort((a,b)=>a.localeCompare(b,'fr'));
+  zones.forEach(z => {
+    const o = document.createElement('option');
+    o.value = z; o.textContent = z;
+    zoneSelect.appendChild(o);
+  });
+}
+
+// ── Sprite from P
+const FR_EN = {
+  "Bulbizarre":"bulbasaur","Herbizarre":"ivysaur","Florizarre":"venusaur","Salamèche":"charmander","Reptincel":"charmeleon","Dracaufeu":"charizard","Carapuce":"squirtle","Carabaffe":"wartortle","Tortank":"blastoise","Chenipan":"caterpie","Chrysacier":"metapod","Papilusion":"butterfree","Aspicot":"weedle","Coconfort":"kakuna","Dardargnan":"beedrill","Roucool":"pidgey","Roucoups":"pidgeotto","Roucarnage":"pidgeot","Rattata":"rattata","Rattatac":"raticate","Piafabec":"spearow","Rapasdepic":"fearow","Abo":"ekans","Arbok":"arbok","Pikachu":"pikachu","Raichu":"raichu","Sabelette":"sandshrew","Sablaireau":"sandslash","Nidoran♀":"nidoran-f","Nidorina":"nidorina","Nidoqueen":"nidoqueen","Nidoran♂":"nidoran-m","Nidorino":"nidorino","Nidoking":"nidoking","Mélofée":"clefairy","Mélodelfe":"clefable","Goupix":"vulpix","Feunard":"ninetales","Rondoudou":"jigglypuff","Grodoudou":"wigglytuff","Nosferapti":"zubat","Nosferalto":"golbat","Mystherbe":"oddish","Ortide":"gloom","Rafflesia":"vileplume","Paras":"paras","Parasect":"parasect","Mimitoss":"venonat","Aéromite":"venomoth","Taupiqueur":"diglett","Triopikeur":"dugtrio","Miaouss":"meowth","Persian":"persian","Psykokwak":"psyduck","Akwakwak":"golduck","Férosinge":"mankey","Colossinge":"primeape","Caninos":"growlithe","Arcanin":"arcanine","Ptitard":"poliwag","Têtarte":"poliwhirl","Tartard":"poliwrath","Abra":"abra","Kadabra":"kadabra","Alakazam":"alakazam","Machoc":"machop","Machopeur":"machoke","Mackogneur":"machamp","Chétiflor":"bellsprout","Boustiflor":"weepinbell","Empiflor":"victreebel","Tentacool":"tentacool","Tentacruel":"tentacruel","Racaillou":"geodude","Gravalanch":"graveler","Grolem":"golem","Ponyta":"ponyta","Galopa":"rapidash","Ramoloss":"slowpoke","Flagadoss":"slowbro","Magnéti":"magnemite","Magnéton":"magneton","Canarticho":"farfetchd","Doduo":"doduo","Dodrio":"dodrio","Otaria":"seel","Lamantine":"dewgong","Tadmorv":"grimer","Grotadmorv":"muk","Kokiyas":"shellder","Crustabri":"cloyster","Fantominus":"gastly","Spectrum":"haunter","Ectoplasma":"gengar","Onix":"onix","Soporifik":"drowzee","Hypnomade":"hypno","Krabby":"krabby","Krabboss":"kingler","Voltorbe":"voltorb","Électrode":"electrode","Noeunoeuf":"exeggcute","Noadkoko":"exeggutor","Osselait":"cubone","Ossatueur":"marowak","Kicklee":"hitmonlee","Tygnon":"hitmonchan","Excelangue":"lickitung","Smogo":"koffing","Smogogo":"weezing","Rhinocorne":"rhyhorn","Rhinoféros":"rhydon","Leveinard":"chansey","Saquedeneu":"tangela","Kangourex":"kangaskhan","Hypotrempe":"horsea","Hypocéan":"seadra","Poissirène":"goldeen","Poissoroy":"seaking","Stari":"staryu","Staross":"starmie","M. Mime":"mr-mime","Insécateur":"scyther","Lippoutou":"jynx","Élektek":"electabuzz","Magmar":"magmar","Scarabrute":"pinsir","Tauros":"tauros","Magicarpe":"magikarp","Léviator":"gyarados","Lokhlass":"lapras","Métamorph":"ditto","Évoli":"eevee","Aquali":"vaporeon","Voltali":"jolteon","Pyroli":"flareon","Porygon":"porygon","Amonita":"omanyte","Amonistar":"omastar","Kabuto":"kabuto","Kabutops":"kabutops","Ptéra":"aerodactyl","Ronflex":"snorlax","Artikodin":"articuno","Électhor":"zapdos","Sulfura":"moltres","Minidraco":"dratini","Draco":"dragonair","Dracolosse":"dragonite","Mewtwo":"mewtwo","Mew":"mew","Germignon":"chikorita","Macronium":"bayleef","Méganium":"meganium","Héricendre":"cyndaquil","Feurisson":"quilava","Typhlosion":"typhlosion","Kaiminus":"totodile","Crocrodil":"croconaw","Aligatueur":"feraligatr","Fouinette":"sentret","Fouinar":"furret","Hoothoot":"hoothoot","Noarfang":"noctowl","Coxy":"ledyba","Coxyclaque":"ledian","Mimigal":"spinarak","Migalos":"ariados","Nostenfer":"crobat","Loupio":"chinchou","Lanturn":"lanturn","Pichu":"pichu","Mélo":"cleffa","Toudoudou":"igglybuff","Togepi":"togepi","Togetic":"togetic","Natu":"natu","Xatu":"xatu","Wattouat":"mareep","Lainergie":"flaaffy","Pharamp":"ampharos","Joliflor":"bellossom","Marill":"marill","Azumarill":"azumarill","Simularbre":"sudowoodo","Tarpaud":"politoed","Granivol":"hoppip","Floravol":"skiploom","Cotovol":"jumpluff","Capumain":"aipom","Tournegrin":"sunkern","Héliatronc":"sunflora","Yanma":"yanma","Axoloto":"wooper","Maraiste":"quagsire","Mentali":"espeon","Noctali":"umbreon","Cornèbre":"murkrow","Roigada":"slowking","Feuforêve":"misdreavus","Zarbi":"unown","Qulbutoké":"wobbuffet","Girafarig":"girafarig","Pomdepik":"pineco","Foretress":"forretress","Insolourdo":"dunsparce","Scorplane":"gligar","Steelix":"steelix","Snubbull":"snubbull","Granbull":"granbull","Qwilfish":"qwilfish","Cizayox":"scizor","Caratroc":"shuckle","Scarhino":"heracross","Farfuret":"sneasel","Teddiursa":"teddiursa","Ursaring":"ursaring","Limagma":"slugma","Volcaropod":"magcargo","Marcacrin":"swinub","Cochignon":"piloswine","Corayon":"corsola","Rémoraid":"remoraid","Octillery":"octillery","Cadoizo":"delibird","Démanta":"mantine","Airmure":"skarmory","Malosse":"houndour","Démolosse":"houndoom","Hyporoi":"kingdra","Phanpy":"phanpy","Donphan":"donphan","Porygon2":"porygon2","Cerfrousse":"stantler","Queulorior":"smeargle","Debugant":"tyrogue","Kapoera":"hitmontop","Lippouti":"smoochum","Élekid":"elekid","Magby":"magby","Écrémeuh":"miltank","Leuphorie":"blissey","Raikou":"raikou","Entei":"entei","Suicune":"suicune","Embrylex":"larvitar","Ymphect":"pupitar","Tyranocif":"tyranitar","Lugia":"lugia","Ho-Oh":"ho-oh","Celebi":"celebi","Arcko":"treecko","Massko":"grovyle","Jungko":"sceptile","Poussifeu":"torchic","Galifeu":"combusken","Braségali":"blaziken","Gobou":"mudkip","Flobio":"marshtomp","Laggron":"swampert","Medhyèna":"poochyena","Grahyèna":"mightyena","Zigzaton":"zigzagoon","Linéon":"linoone","Chenipotte":"wurmple","Armulys":"silcoon","Charmillon":"beautifly","Blindalys":"cascoon","Papinox":"dustox","Nénupiot":"lotad","Lombre":"lombre","Ludicolo":"ludicolo","Grainipiot":"seedot","Pifeuil":"nuzleaf","Tengalice":"shiftry","Nirondelle":"taillow","Hélédelle":"swellow","Goélise":"wingull","Bekipan":"pelipper","Tarsal":"ralts","Kirlia":"kirlia","Gardevoir":"gardevoir","Arakdo":"surskit","Maskadra":"masquerain","Balignon":"shroomish","Chapignon":"breloom","Parecool":"slakoth","Vigoroth":"vigoroth","Monaflèmit":"slaking","Ningale":"nincada","Ninjask":"ninjask","Munja":"shedinja","Chuchmur":"whismur","Ramboum":"loudred","Brouhabam":"exploud","Makuhita":"makuhita","Hariyama":"hariyama","Azurill":"azurill","Tarinor":"nosepass","Skitty":"skitty","Delcatty":"delcatty","Ténéfix":"sableye","Mysdibule":"mawile","Galekid":"aron","Galegon":"lairon","Galeking":"aggron","Méditikka":"meditite","Charmina":"medicham","Dynavolt":"electrike","Élecsprint":"manectric","Posipi":"plusle","Négapi":"minun","Muciole":"volbeat","Lumivole":"illumise","Rosélia":"roselia","Gloupti":"gulpin","Avaltout":"swalot","Carvanha":"carvanha","Sharpedo":"sharpedo","Wailmer":"wailmer","Wailord":"wailord","Chamallot":"numel","Camérupt":"camerupt","Chartor":"torkoal","Spoink":"spoink","Groret":"grumpig","Spinda":"spinda","Kraknoix":"trapinch","Vibraninf":"vibrava","Libégon":"flygon","Cacnea":"cacnea","Cacturne":"cacturne","Tylton":"swablu","Altaria":"altaria","Mangriff":"zangoose","Séviper":"seviper","Séléroc":"lunatone","Solaroc":"solrock","Barloche":"barboach","Barbicha":"whiscash","Écrapince":"corphish","Colhomard":"crawdaunt","Balbuto":"baltoy","Kaorine":"claydol","Lilia":"lileep","Vacilys":"cradily","Anorith":"anorith","Armaldo":"armaldo","Barpau":"feebas","Milobellus":"milotic","Morphéo":"castform","Kecleon":"kecleon","Polichombr":"shuppet","Branette":"banette","Skelénox":"duskull","Téraclope":"dusclops","Tropius":"tropius","Éoko":"chimecho","Absol":"absol","Okéoké":"wynaut","Stalgamin":"snorunt","Oniglali":"glalie","Obalie":"spheal","Phogleur":"sealeo","Kaimorse":"walrein","Coquiperl":"clamperl","Serpang":"huntail","Rosabyss":"gorebyss","Relicanth":"relicanth","Lovdisc":"luvdisc","Draby":"bagon","Drackhaus":"shelgon","Drattak":"salamence","Terhal":"beldum","Métang":"metang","Métalosse":"metagross","Regirock":"regirock","Regice":"regice","Registeel":"registeel","Latias":"latias","Latios":"latios","Kyogre":"kyogre","Groudon":"groudon","Rayquaza":"rayquaza","Jirachi":"jirachi","Deoxys":"deoxys","Tortipouss":"turtwig","Boskara":"grotle","Torterra":"torterra","Ouisticram":"chimchar","Chimpenfeu":"monferno","Simiabraz":"infernape","Tiplouf":"piplup","Prinplouf":"prinplup","Pingoléon":"empoleon","Étourmi":"starly","Étourvol":"staravia","Étouraptor":"staraptor","Keunotor":"bidoof","Castorno":"bibarel","Crikzik":"kricketot","Mélokrik":"kricketune","Lixy":"shinx","Luxio":"luxio","Luxray":"luxray","Rozbouton":"budew","Roserade":"roserade","Kranidos":"cranidos","Charkos":"rampardos","Dinoclier":"shieldon","Bastiodon":"bastiodon","Cheniti":"burmy","Cheniselle":"wormadam","Papilord":"mothim","Apitrini":"combee","Apireine":"vespiquen","Pachirisu":"pachirisu","Mustébouée":"buizel","Mustéflott":"floatzel","Ceribou":"cherubi","Ceriflor":"cherrim","Sancoki":"shellos","Tritosor":"gastrodon","Capidextre":"ambipom","Baudrive":"drifloon","Grodrive":"drifblim","Laporeille":"buneary","Lockpin":"lopunny","Magirêve":"mismagius","Corboss":"honchkrow","Chaglam":"glameow","Chaffreux":"purugly","Korillon":"chingling","Moufouette":"stunky","Moufflair":"skuntank","Archéomire":"bronzor","Archéodong":"bronzong","Manzaï":"bonsly","Mime Jr.":"mime-jr","Ptiravi":"happiny","Pijako":"chatot","Spiritomb":"spiritomb","Griknot":"gible","Carmache":"gabite","Carchacrok":"garchomp","Goinfrex":"munchlax","Riolu":"riolu","Lucario":"lucario","Hippopotas":"hippopotas","Hippodocus":"hippowdon","Rapion":"skorupi","Drascore":"drapion","Cradopaud":"croagunk","Coatox":"toxicroak","Vortente":"carnivine","Écayon":"finneon","Luminéon":"lumineon","Babimanta":"mantyke","Blizzi":"snover","Blizzaroi":"abomasnow","Dimoret":"weavile","Magnézone":"magnezone","Coudlangue":"lickilicky","Rhinastoc":"rhyperior","Bouldeneu":"tangrowth","Élekable":"electivire","Maganon":"magmortar","Togekiss":"togekiss","Yanmega":"yanmega","Phyllali":"leafeon","Givrali":"glaceon","Scorvol":"gliscor","Mammochon":"mamoswine","Porygon-Z":"porygon-z","Gallame":"gallade","Tarinorme":"probopass","Noctunoir":"dusknoir","Momartik":"froslass","Motisma":"rotom","Créhelf":"uxie","Créfollet":"mesprit","Créfadet":"azelf","Dialga":"dialga","Palkia":"palkia","Heatran":"heatran","Regigigas":"regigigas","Giratina":"giratina","Cresselia":"cresselia","Phione":"phione","Manaphy":"manaphy","Darkrai":"darkrai","Shaymin":"shaymin","Arceus":"arceus","Victini":"victini","Vipélierre":"snivy","Lianaja":"servine","Majaspic":"serperior","Gruikui":"tepig","Grotichon":"pignite","Roitiflam":"emboar","Moustillon":"oshawott","Mateloutre":"dewott","Clamiral":"samurott","Ratentif":"patrat","Miradar":"watchog","Ponchiot":"lillipup","Ponchien":"herdier","Mastouffe":"stoutland","Chacripan":"purrloin","Léopardus":"liepard","Feuillajou":"pansage","Feuiloutan":"simisage","Flamajou":"pansear","Flamoutan":"simisear","Flotajou":"panpour","Flotoutan":"simipour","Munna":"munna","Mushana":"musharna","Poichigeon":"pidove","Colombeau":"tranquill","Déflaisan":"unfezant","Zébibron":"blitzle","Zéblitz":"zebstrika","Nodulithe":"roggenrola","Géolithe":"boldore","Gigalithe":"gigalith","Chovsourir":"woobat","Rhinolove":"swoobat","Rototaupe":"drilbur","Minotaupe":"excadrill","Nanméouïe":"audino","Charpenti":"timburr","Ouvrifier":"gurdurr","Bétochef":"conkeldurr","Tritonde":"tympole","Batracné":"palpitoad","Crapustule":"seismitoad","Judokrak":"throh","Karaclée":"sawk","Larveyette":"sewaddle","Couverdure":"swadloon","Manternel":"leavanny","Venipatte":"venipede","Scobolide":"whirlipede","Brutapode":"scolipede","Doudouvet":"cottonee","Farfaduvet":"whimsicott","Chlorobule":"petilil","Fragilady":"lilligant","Bargantua":"basculin","Mascaïman":"sandile","Escroco":"krokorok","Crocorible":"krookodile","Darumarond":"darumaka","Darumacho":"darmanitan","Maracachi":"maractus","Crabicoque":"dwebble","Crabaraque":"crustle","Baggiguane":"scraggy","Baggaïd":"scrafty","Cryptéro":"sigilyph","Tutafeh":"yamask","Tutankafer":"cofagrigus","Carapagos":"tirtouga","Mégapagos":"carracosta","Arkéapti":"archen","Aéroptéryx":"archeops","Miamiasme":"trubbish","Miasmax":"garbodor","Zorua":"zorua","Zoroark":"zoroark","Chinchidou":"minccino","Pashmilla":"cinccino","Scrutella":"gothita","Mesmérella":"gothorita","Sidérella":"gothitelle","Nucléos":"solosis","Méios":"duosion","Symbios":"reuniclus","Couaneton":"ducklett","Lakmécygne":"swanna","Sorbébé":"vanillite","Sorboul":"vanillish","Sorbouboul":"vanilluxe","Vivaldaim":"deerling","Haydaim":"sawsbuck","Emolga":"emolga","Carabing":"karrablast","Lançargot":"escavalier","Trompignon":"foongus","Gaulet":"amoonguss","Viskuse":"frillish","Moyade":"jellicent","Mamanbo":"alomomola","Statitik":"joltik","Mygavolt":"galvantula","Grindur":"ferroseed","Noacier":"ferrothorn","Tic":"klink","Clic":"klang","Cliticlic":"klinklang","Anchwatt":"tynamo","Lampéroie":"eelektrik","Ohmassacre":"eelektross","Lewsor":"elgyem","Neitram":"beheeyem","Funécire":"litwick","Mélancolux":"lampent","Lugulabre":"chandelure","Coupenotte":"axew","Incisache":"fraxure","Tranchodon":"haxorus","Polarhume":"cubchoo","Polagriffe":"beartic","Hexagel":"cryogonal","Escargaume":"shelmet","Limaspeed":"accelgor","Limonde":"stunfisk","Kungfouine":"mienfoo","Shaofouine":"mienshao","Drakkarmin":"druddigon","Gringolem":"golett","Golemastoc":"golurk","Scalpion":"pawniard","Scalproie":"bisharp","Frison":"bouffalant","Furaiglon":"rufflet","Gueriaigle":"braviary","Vostourno":"vullaby","Vaututrice":"mandibuzz","Aflamanoir":"heatmor","Fermite":"durant","Solochi":"deino","Diamat":"zweilous","Trioxhydre":"hydreigon","Pyronille":"larvesta","Pyrax":"volcarona","Cobaltium":"cobalion","Terrakium":"terrakion","Viridium":"virizion","Boréas":"tornadus","Fulguris":"thundurus","Reshiram":"reshiram","Zekrom":"zekrom","Démétéros":"landorus","Kyurem":"kyurem","Keldeo":"keldeo","Meloetta":"meloetta","Genesect":"genesect","Marisson":"chespin","Boguérisse":"quilladin","Blindépique":"chesnaught","Feunnec":"fennekin","Roussil":"braixen","Goupelin":"delphox","Grenousse":"froakie","Croâporal":"frogadier","Amphinobi":"greninja","Sapereau":"bunnelby","Excavarenne":"diggersby","Passerouge":"fletchling","Braisillon":"fletchinder","Flambusard":"talonflame","Lépidonille":"scatterbug","Pérégrain":"spewpa","Prismillon":"vivillon","Hélionceau":"litleo","Némélios":"pyroar","Flabébé":"flabebe","Floette":"floette","Florges":"florges","Cabriolaine":"skiddo","Chevroum":"gogoat","Pandespiègle":"pancham","Pandarbare":"pangoro","Couafarel":"furfrou","Psystigri":"espurr","Mistigrix":"meowstic","Monorpale":"honedge","Dimoclès":"doublade","Exagide":"aegislash","Fluvetin":"spritzee","Cocotine":"aromatisse","Sucroquin":"swirlix","Cupcanaille":"slurpuff","Sepiatop":"inkay","Sepiatroce":"malamar","Opermine":"binacle","Golgopathe":"barbaracle","Venalgue":"skrelp","Kravarech":"dragalge","Flingouste":"clauncher","Gamblast":"clawitzer","Galvaran":"helioptile","Iguolta":"heliolisk","Ptyranidur":"tyrunt","Rexillius":"tyrantrum","Amagara":"amaura","Dragmara":"aurorus","Nymphali":"sylveon","Brutalibré":"hawlucha","Dedenne":"dedenne","Strassie":"carbink","Mucuscule":"goomy","Colimucus":"sliggoo","Muplodocus":"goodra","Trousselin":"klefki","Brocélôme":"phantump","Desséliande":"trevenant","Pitrouille":"pumpkaboo","Banshitrouye":"gourgeist","Grelaçon":"bergmite","Séracrawl":"avalugg","Sonistrelle":"noibat","Bruyverne":"noivern","Xerneas":"xerneas","Yveltal":"yveltal","Zygarde":"zygarde","Diancie":"diancie","Hoopa":"hoopa","Volcanion":"volcanion","Brindibou":"rowlet","Efflèche":"dartrix","Archéduc":"decidueye","Flamiaou":"litten","Matoufeu":"torracat","Félinferno":"incineroar","Otaquin":"popplio","Otarlette":"brionne","Oratoria":"primarina","Picassaut":"pikipek","Piclairon":"trumbeak","Bazoucan":"toucannon","Manglouton":"yungoos","Argouste":"gumshoos","Larvibule":"grubbin","Chrysapile":"charjabug","Lucanon":"vikavolt","Crabagarre":"crabrawler","Crabominable":"crabominable","Plumeline":"oricorio","Bombydou":"cutiefly","Rubombelle":"ribombee","Rocabot":"rockruff","Lougaroc":"lycanroc","Froussardine":"wishiwashi","Vorastérie":"mareanie","Prédastérie":"toxapex","Tiboudet":"mudbray","Bourrinos":"mudsdale","Araqua":"dewpider","Tarenbulle":"araquanid","Mimantis":"fomantis","Floramantis":"lurantis","Spododo":"morelull","Lampignon":"shiinotic","Tritox":"salandit","Malamandre":"salazzle","Nounourson":"stufful","Chelours":"bewear","Croquine":"bounsweet","Candine":"steenee","Sucreine":"tsareena","Guérilande":"comfey","Gouroutan":"oranguru","Quartermac":"passimian","Sovkipou":"wimpod","Sarmuraï":"golisopod","Bacabouh":"sandygast","Trépassable":"palossand","Concombaffe":"pyukumuku","Type:0":"type-null","Silvallié":"silvally","Météno":"minior","Dodoala":"komala","Boumata":"turtonator","Togedemaru":"togedemaru","Mimiqui":"mimikyu","Denticrisse":"bruxish","Draïeul":"drampa","Sinistrail":"dhelmise","Bébécaille":"jangmo-o","Écaïd":"hakamo-o","Ékaïser":"kommo-o","Tokorico":"tapu-koko","Tokopiyon":"tapu-lele","Tokotoro":"tapu-bulu","Tokopisco":"tapu-fini","Cosmog":"cosmog","Cosmovum":"cosmoem","Solgaleo":"solgaleo","Lunala":"lunala","Zéroïd":"nihilego","Mouscoto":"buzzwole","Cancrelove":"pheromosa","Câblifère":"xurkitree","Bamboiselle":"celesteela","Katagami":"kartana","Engloutyran":"guzzlord","Necrozma":"necrozma","Magearna":"magearna","Marshadow":"marshadow","Vémini":"poipole","Mandrillon":"naganadel","Ama-Ama":"stakataka","Pierroteknik":"blacephalon","Zeraora":"zeraora","Meltan":"meltan","Melmetal":"melmetal","Ouistempo":"grookey","Badabouin":"thwackey","Gorythmic":"rillaboom","Flambino":"scorbunny","Lapyro":"raboot","Pyrobut":"cinderace","Larméléon":"sobble","Arrozard":"drizzile","Lézargus":"inteleon","Rongourmand":"skwovet","Rongrigou":"greedent","Minisange":"rookidee","Bleuseille":"corvisquire","Corvaillus":"corviknight","Larvadar":"blipbug","Coléodôme":"dottler","Astronelle":"orbeetle","Goupilou":"nickit","Roublenard":"thievul","Tournicoton":"gossifleur","Blancoton":"eldegoss","Moumouton":"wooloo","Moumouflon":"dubwool","Khélocrok":"chewtle","Torgamord":"drednaw","Voltoutou":"yamper","Fulgudog":"boltund","Charbi":"rolycoly","Wagomine":"carkol","Monthracite":"coalossal","Verpom":"applin","Pomdrapi":"flapple","Dratatin":"appletun","Dunaja":"silicobra","Dunaconda":"sandaconda","Nigosier":"cramorant","Embrochet":"arrokuda","Hastacuda":"barraskewda","Toxizap":"toxel","Salarsen":"toxtricity","Grillepattes":"sizzlipede","Scolocendre":"centiskorch","Poulpaf":"clobbopus","Krakos":"grapploct","Théffroi":"sinistea","Polthégeist":"polteageist","Bibichut":"hatenna","Chapotus":"hattrem","Sorcilence":"hatterene","Grimalin":"impidimp","Fourbelin":"morgrem","Angoliath":"grimmsnarl","Ixon":"obstagoon","Berserkatt":"perrserker","Corayôme":"cursola","Palarticho":"sirfetchd","M. Glaquette":"mr-rime","Tutétékri":"runerigus","Crèmy":"milcery","Charmilly":"alcremie","Hexadron":"falinks","Wattapik":"pincurchin","Frissonille":"snom","Beldeneige":"frosmoth","Dolman":"stonjourner","Bekaglaçon":"eiscue","Wimessir":"indeedee","Morpeko":"morpeko","Charibari":"cufant","Pachyradjah":"copperajah","Galvagon":"dracozolt","Galvagla":"arctozolt","Hydragon":"dracovish","Hydragla":"arctovish","Duralugon":"duraludon","Fantyrm":"dreepy","Dispareptil":"drakloak","Lanssorien":"dragapult","Zacian":"zacian","Zamazenta":"zamazenta","Éthernatos":"eternatus","Wushours":"kubfu","Shifours":"urshifu","Zarude":"zarude","Regieleki":"regieleki","Regidrago":"regidrago","Blizzeval":"glastrier","Spectreval":"spectrier","Sylveroy":"calyrex","Cerbyllin":"wyrdeer","Hachécateur":"kleavor","Ursaking":"ursaluna","Paragruel":"basculegion","Farfurex":"sneasler","Qwilpik":"overqwil","Amovénus":"enamorus","Poussacha":"sprigatito","Matourgeon":"floragato","Miascarade":"meowscarada","Chochodile":"fuecoco","Crocogril":"crocalor","Flâmigator":"skeledirge","Coiffeton":"quaxly","Canarbello":"quaxwell","Palmaval":"quaquaval","Gourmelet":"lechonk","Fragroin":"oinkologne","Tissenboule":"tarountula","Filentrappe":"spidops","Lilliterelle":"nymble","Gambex":"lokix","Pohm":"pawmi","Pohmotte":"pawmo","Pohmarmotte":"pawmot","Compagnol":"tandemaus","Famignol":"maushold","Pâtachiot":"fidough","Briochien":"dachsbun","Olivini":"smoliv","Olivado":"dolliv","Arboliva":"arboliva","Tapatoès":"squawkabilly","Selutin":"nacli","Amassel":"naclstack","Gigansel":"garganacl","Charbambin":"charcadet","Carmadura":"armarouge","Malvalame":"ceruledge","Têtampoule":"tadbulb","Ampibidou":"bellibolt","Zapétrel":"wattrel","Fulgulairo":"kilowattrel","Grondogue":"maschiff","Dogrino":"mabosstiff","Gribouraigne":"shroodle","Tag-Tag":"grafaiai","Virovent":"bramblin","Virevorreur":"brambleghast","Terracool":"toedscool","Terracruel":"toedscruel","Craparoi":"klawf","Pimito":"capsakid","Scovilain":"scovillain","Léboulérou":"rellor","Bérasca":"rabsca","Flotillon":"flittle","Cléopsytra":"espathra","Forgerette":"tinkatink","Forgella":"tinkatuff","Forgelina":"tinkaton","Taupikeau":"wiglett","Triopikeau":"wugtrio","Lestombaile":"bombirdier","Dofin":"finizen","Superdofin":"palafin","Vrombi":"varoom","Vrombotor":"revavroom","Motorizard":"cyclizar","Ferdeter":"orthworm","Germéclat":"glimmet","Floréclat":"glimmora","Toutombe":"greavard","Tomberro":"houndstone","Flamenroule":"flamigo","Piétacé":"cetoddle","Balbalèze":"cetitan","Délestin":"veluza","Oyacata":"dondozo","Nigirigon":"tatsugiri","Courrousinge":"annihilape","Terraiste":"clodsire","Farigiraf":"farigiraf","Deusolourdo":"dudunsparce","Scalpereur":"kingambit","Fort-Ivoire":"great-tusk","Hurle-Queue":"scream-tail","Fongus-Furie":"brute-bonnet","Flotte-Mèche":"flutter-mane","Rampe-Ailes":"slither-wing","Pelage-Sablé":"sandy-shocks","Roue-de-Fer":"iron-treads","Hotte-de-Fer":"iron-bundle","Paume-de-Fer":"iron-hands","Têtes-de-Fer":"iron-jugulis","Mite-de-Fer":"iron-moth","Épine-de-Fer":"iron-thorns","Frigodo":"frigibax","Cryodo":"arctibax","Glaivodo":"baxcalibur","Mordudor":"gimmighoul","Gromago":"gholdengo","Chongjian":"wo-chien","Baojian":"chien-pao","Dinglu":"ting-lu","Yuyu":"chi-yu","Rugit-Lune":"roaring-moon","Garde-de-Fer":"iron-valiant","Koraidon":"koraidon","Miraidon":"miraidon","Serpente-Eau":"walking-wake","Vert-de-Fer":"iron-leaves","Pomdramour":"dipplin","Poltchageist":"poltchageist","Théffroyable":"sinistcha","Félicanis":"okidogi","Fortusimia":"munkidori","Favianos":"fezandipiti","Ogerpon":"ogerpon","Pondralugon":"archaludon","Pomdorochi":"hydrapple","Feu-Perçant":"gouging-fire","Ire-Foudre":"raging-bolt","Roc-de-Fer":"iron-boulder","Chef-de-Fer":"iron-crown","Terapagos":"terapagos","Pêchaminus":"pecharunt"
+};
+
+// Sprite from PokeAPI official sprites repo (stable, no CORS issue)
+function spriteUrl(frName) {
+  const en = FR_EN[frName];
+  if (!en) return null;
+  return 'https://img.pokemondb.net/sprites/black-white/anim/normal/' + en + '.gif';
+}
+// fallback static
+function spriteUrlStatic(frName) {
+  const en = FR_EN[frName];
+  if (!en) return null;
+  return 'https://img.pokemondb.net/sprites/generation-i/red-blue/' + en + '.png';
+}
+// Use PokeAPI raw sprites (very reliable)
+function getBestSprite(frName) {
+  const en = FR_EN[frName];
+  if (!en) return null;
+  // PokeAPI sprites on github - always works, no hotlink protection
+  // Use sprite number approach via name lookup
+  return 'https://img.pokemondb.net/sprites/home/normal/' + en + '.png';
+}
+
+// ── Method config ────────────────────────────────────────────────────────────
+const METHODS = {
+  'Grass':      { label:'Herbes',       icon:'🌿', cls:'grass' },
+  'Tall Grass': { label:'Gr. Herbes',   icon:'🌾', cls:'grass' },
+  'Surf':       { label:'Surf',         icon:'🌊', cls:'water' },
+  'Old Rod':    { label:'Vieille C.',   icon:'🎣', cls:'water' },
+  'Good Rod':   { label:'Bonne C.',     icon:'🎣', cls:'water' },
+  'Super Rod':  { label:'Super C.',     icon:'🎣', cls:'water' },
+  'Rock Smash': { label:'Roc Fracas',   icon:'🪨', cls:'rock'  },
+  'Swarm':      { label:'Essaim',       icon:'✨', cls:'swarm' },
+};
+function getMeta(m) { return METHODS[m] || { label:m, icon:'❓', cls:'grass' }; }
+
+// ── State ─────────────────────────────────────────────────────────────────
+const zoneSelect = document.getElementById('zoneSelect');
+const pillGroup  = document.getElementById('pillGroup');
+const pillsEl    = document.getElementById('pills');
+const infoBar    = document.getElementById('infoBar');
+const grid       = document.getElementById('grid');
+const countEl    = document.getElementById('countEl');
+const zoneNameEl = document.getElementById('zoneNameEl');
+let activeFilters = new Set(['all']);
+
+// Zones are populated dynamically by populateZones() after file load
+
+// Build pills for a zone
+function buildPills(zone) {
+  pillsEl.innerHTML = '';
+  const types = ['all', ...Object.keys(SPAWNS[zone])];
+  activeFilters = new Set(['all']);
+
+  types.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.dataset.t = t;
+    if (t === 'all') {
+      btn.textContent = '🗺️ Tout';
+      btn.classList.add('active-all');
+    } else {
+      const m = getMeta(t);
+      btn.textContent = m.icon + ' ' + m.label;
+    }
+    btn.addEventListener('click', () => {
+      if (t === 'all') {
+        activeFilters = new Set(['all']);
+      } else {
+        activeFilters.delete('all');
+        if (activeFilters.has(t)) {
+          activeFilters.delete(t);
+          if (!activeFilters.size) activeFilters.add('all');
+        } else {
+          activeFilters.add(t);
+        }
+      }
+      updatePillStates();
+      renderZone(zone);
+    });
+    pillsEl.appendChild(btn);
+  });
+}
+
+function updatePillStates() {
+  pillsEl.querySelectorAll('.pill').forEach(btn => {
+    const t = btn.dataset.t;
+    btn.className = 'pill';
+    if (activeFilters.has(t)) {
+      if (t === 'all') btn.classList.add('active-all');
+      else btn.classList.add('active-' + getMeta(t).cls);
+    }
+  });
+}
+
+function renderZone(zone) {
+  const zd = SPAWNS[zone] || {};
+  const methods = activeFilters.has('all')
+    ? Object.keys(zd)
+    : [...activeFilters].filter(f => zd[f]);
+
+  // Aggregate per pokemon
+  const pm = {};
+  for (const method of methods) {
+    for (const [name, info] of Object.entries(zd[method] || {})) {
+      if (!pm[name]) pm[name] = {};
+      pm[name][method] = info;
+    }
+  }
+
+  const names = Object.keys(pm).sort((a,b) => a.localeCompare(b,'fr'));
+  countEl.textContent = names.length;
+  zoneNameEl.textContent = zone;
+  grid.innerHTML = '';
+
+  if (!names.length) {
+    grid.innerHTML = '<div class="empty"><span class="ico">🔍</span><p>Aucun Pokémon pour ce filtre</p></div>';
+    return;
+  }
+
+  names.forEach((name, i) => {
+    const card = document.createElement('div');
+    card.className = 'poke-card';
+    card.style.animationDelay = (i * 0.025) + 's';
+
+    const spriteU = getBestSprite(name);
+    const spriteHtml = spriteU
+      ? `<img src="${spriteU}" alt="${name}" loading="lazy" onerror="this.outerHTML='<div class=\'no-sprite\'>?</div>'">`
+      : `<div class="no-sprite">?</div>`;
+
+    const rows = Object.entries(pm[name]).map(([method, info]) => {
+      const m = getMeta(method);
+      return `<div class="enc-row c-${m.cls}">
+        <span class="enc-method">${m.icon} ${m.label}</span>
+        <span class="enc-prob">${info.prob}</span>
+        <span class="enc-lvl">${info.lvl}</span>
+      </div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="sprite-box">${spriteHtml}</div>
+      <div class="poke-name">${name}</div>
+      <div class="encounters">${rows}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+zoneSelect.addEventListener('change', () => {
+  const zone = zoneSelect.value;
+  if (!zone) {
+    grid.innerHTML = '<div class="empty"><span class="ico">🗺️</span><p>Sélectionne une zone dans le menu ci-dessus</p></div>';
+    infoBar.style.display = 'none';
+    pillGroup.style.display = 'none';
+    return;
+  }
+  infoBar.style.display = 'flex';
+  pillGroup.style.display = 'flex';
+  buildPills(zone);
+  renderZone(zone);
+});
+
+// Initialize the file loader on page load
+initFileLoader();
+</script>
+</body>
+</html>
